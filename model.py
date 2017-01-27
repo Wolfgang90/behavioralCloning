@@ -63,8 +63,13 @@ except:
 	print("Data was converted and stored in the pickle files 'behavioral_cloning_X.p' and 'behavioral_cloning_y.p' for future use")
 	print()
 
+#2a Normalize data
+X = X.astype("float32")
+X /= 255
+X -= 0.5
 
-#2 Split data into training and validation data
+
+#2b Split data into training and validation data
 
 X, y = shuffle(X,y)
 X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.1)
@@ -82,8 +87,8 @@ print()
 
 # Parameter overview
 # Overall
-batch_size = 5
-nb_epoch = 2
+batch_size = 20
+nb_epoch = 1
 
 try:
 	# Import model
@@ -98,7 +103,8 @@ try:
 	weights_imported = True
 
 except:	
-	
+	print("Started model creation")
+	print()
 	# Convolution
 	# Number of output filters
 	nb_filter1 = 32
@@ -128,7 +134,7 @@ except:
 	layer8 = ELU()(layer7)
 	layer9 = Convolution2D(nb_filter4,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same")(layer8)
 	layer10 = Flatten()(layer9)
-	layer11 = Dense(256)(layer10)
+	layer11 = Dense(64)(layer10)
 	layer12 = ELU()(layer11)
 	layer13 = Dropout(drop_prob)(layer12)
 	layer14 = Dense(16)(layer13)
