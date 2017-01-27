@@ -7,6 +7,7 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from keras.layers.core import Flatten
 from keras.layers import Input, Convolution2D, Dense, Dropout
+from keras.layers.pooling import MaxPooling2D
 from keras.layers.advanced_activations import ELU
 from keras.models import Model, model_from_json
 import json
@@ -97,13 +98,16 @@ try:
 	weights_imported = True
 
 except:	
-	"""
+	
 	# Convolution
 	# Number of output filters
 	nb_filter1 = 32
 	nb_filter2 = 64
+	nb_filter3 = 96
+	nb_filter4 = 96
 	# Kernel size
 	kernel_size_conv = (3,3)
+	kernel_size_pool =(2,2)
 
 	#Dropout
 	drop_prob = 0.3
@@ -116,9 +120,21 @@ except:
 	# 2d Convolution 32 layers, (3,3) Kernel size
 	layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same")(inputs)
 	layer2 = ELU()(layer1)
-	layer3 = Dropout(drop_prob)(layer2)
-	layer4 = Flatten()(layer3)
-	prediction = Dense(1)(layer4)
+	layer3 = MaxPooling2D(kernel_size_pool,border_mode = "same")(layer2)
+	layer4 = Dropout(drop_prob)(layer3)
+	layer5 = Convolution2D(nb_filter2,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same")(layer4)
+	layer6 = ELU()(layer5)
+	layer7 = Convolution2D(nb_filter3,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same")(layer6)
+	layer8 = ELU()(layer7)
+	layer9 = Convolution2D(nb_filter4,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same")(layer8)
+	layer10 = Flatten()(layer9)
+	layer11 = Dense(256)(layer10)
+	layer12 = ELU()(layer11)
+	layer13 = Dropout(drop_prob)(layer12)
+	layer14 = Dense(16)(layer13)
+	layer15 = ELU()(layer14)
+	layer16 = Dropout(drop_prob)(layer15)
+	prediction = Dense(1)(layer16)
 
 	model = Model(input = inputs, output = prediction)
 
@@ -127,7 +143,7 @@ except:
 
 	model_imported = False
 	weights_imported = False
-	"""
+	
 
 #4 Compile model; if model.h5 available use these weigts to initialize, else random weigths
 model.compile(optimizer = "Adam", loss = "binary_crossentropy", metrics = ["accuracy"])
