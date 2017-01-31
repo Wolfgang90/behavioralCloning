@@ -1,8 +1,5 @@
 import tensorflow as tf
-import numpy as np
-import csv
-import pickle
-from scipy import misc
+import img_preprocessing
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from keras.layers.core import Flatten
@@ -13,61 +10,16 @@ from keras.models import Model, model_from_json
 import json
 import os.path
 
+
+
+
 #1 Import data
 
 # If required data was already converted earlier and is stored in a pickle file
 try:
-	
-	with open("behavioral_cloning_X.p","rb") as f:
-		X = pickle.load(f)
-
-	with open("behavioral_cloning_y.p","rb") as f:
-		y = pickle.load(f)
-	print("Data was loaded from pickle files 'behavioral_cloning_X.p' and 'behavioral_cloning_y.p'")
-	print()
-
-# If required data was not converted yet, it is converted and eventually stored in a pickle file
+	X,y = img_preprocessing.load_data_from_pickle()
 except:
-	# Import image names from csv-file
-	with open("driving_log.csv","rt") as csvfile:
-		file = csv.reader(csvfile, delimiter = ",")
-		image_name = list(list(zip(*file))[0])
-
-	# Import steering angles from csv-file
-	with open("driving_log.csv","rt") as csvfile:
-		file = csv.reader(csvfile, delimiter = ",")	
-		steering_angle = list(list(zip(*file))[3])
-
-	# Modify csv-input
-	# if csv-file with header (Udacity standard input)
-	if image_name[0] == "center":
-		image_name = [name[name.find("IMG/"):] for name in image_name[1:]]
-		y = np.array([float(angle) for angle in steering_angle[1:]])
-
-	# if csv-file without header (Self-generated input with simulator)
-	else:
-		image_name = [name[name.find("IMG/"):] for name in image_name]
-		y = np.array([float(angle) for angle in steering_angle])
-
-	# Load first image file and add additional axis for images
-	X = misc.imread(image_name[0])[np.newaxis,:]
-
-	# Load all other image files
-	for i in image_name[1:]:
-		X = np.concatenate((X, misc.imread(i)[np.newaxis,:]), axis = 0)
-
-	with open("behavioral_cloning_X.p","wb") as f:
-		pickle.dump(X,f)
-	with open("behavioral_cloning_y.p","wb") as f:
-		pickle.dump(y,f)
-	print("Data was converted and stored in the pickle files 'behavioral_cloning_X.p' and 'behavioral_cloning_y.p' for future use")
-	print()
-
-#2a Normalize data
-X = X.astype("float32")
-X /= 255
-X -= 0.5
-
+	X,y = img_preprocessing.load_preprocess_pickle_data_from_initial_file()
 
 #2b Split data into training and validation data
 
@@ -87,7 +39,7 @@ print()
 
 # Parameter overview
 # Overall
-batch_size = 20
+batch_size = 128
 nb_epoch = 1
 
 try:
@@ -119,7 +71,7 @@ except:
 	drop_prob = 0.3
 
 	# Return the input tensor
-	inputs = Input(shape=(160, 320, 3))
+	inputs = Input(shape=(32, 32, 3))
 
 
 	# Define layers
@@ -171,7 +123,7 @@ else:
 
 # Save weights
 if weights_imported == True:
-	save_weights = input("Do you wand to save the trained weights [y/n]? If you don't save the weights the training effect of this run will be lost: ")
+	save_weights = input("Do you want to save the trained weights [y/n]? If you don't save the weights the training effect of this run will be lost: ")
 	while save_weights not in ["y","n"]:
 		save_weights = input("Your input was not 'y' or 'n'. Please provide proper input: ")
 	if save_weights == "y":
@@ -182,9 +134,11 @@ if weights_imported == True:
 		print("Weights were not saved")
 		print()
 else:
+	model.save_weights("./model.h5")
 	print("As this was the first round of training weights were saved to 'model.h5'")
 	print()
 
 #Print an overview of the model
 print("MODEL SUMMARY")
 print(model.summary())
+
