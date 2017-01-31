@@ -13,15 +13,20 @@ import os.path
 
 
 
-#1 Import data
+#1 Import and preprocess data
 
-# If required data was already converted earlier and is stored in a pickle file
+#1.0 Hyperparameter:
+image_rescale_size = (32,32)
+
+#1.1 If pickle file with already converted data is available, load pickle file
 try:
 	X,y = img_preprocessing.load_data_from_pickle()
-except:
-	X,y = img_preprocessing.load_preprocess_pickle_data_from_initial_file()
 
-#2b Split data into training and validation data
+#1.2 If no pickle file available, preprocess data
+except:
+	X,y = img_preprocessing.load_preprocess_pickle_data_from_initial_file(image_rescale_size)
+
+#1.3 Split data into training and validation data
 
 X, y = shuffle(X,y)
 X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.1)
@@ -35,13 +40,13 @@ print("Test set size: {}".format(X_test.shape))
 print()
 
 
-#3 Define model or load the model
+#2 Define model or load the model
 
-# Parameter overview
-# Overall
+#2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
 batch_size = 128
 nb_epoch = 1
 
+#2.1 Import stored model and weights from previous training session (if available)
 try:
 	# Import model
 	with open("model.json","r") as f:
@@ -51,30 +56,35 @@ try:
 	model.load_weights("model.h5",by_name = False)
 	print("Model and weights were loaded from the files 'model.json' and 'model.h5'")
 	print()
+
+	# Set imported-markers to "True" for future reference
 	model_imported = True
 	weights_imported = True
 
+#2.2 Define model (if no model and weights available from previous sessions)
 except:	
 	print("Started model creation")
 	print()
-	# Convolution
-	# Number of output filters
+
+	#2.2.1 Model hyperparameters
+	#2.2.1.1 Convolution - Number of output filters
 	nb_filter1 = 32
 	nb_filter2 = 64
 	nb_filter3 = 96
 	nb_filter4 = 96
-	# Kernel size
+
+	#2.2.1.2 Kernel size
 	kernel_size_conv = (3,3)
 	kernel_size_pool =(2,2)
 
-	#Dropout
+	#2.2.1.3 Dropout
 	drop_prob = 0.3
 
-	# Return the input tensor
+	#2.2.2 Define model layers
+
+	# Define input tensor
 	inputs = Input(shape=(32, 32, 3))
 
-
-	# Define layers
 	# 2d Convolution 32 layers, (3,3) Kernel size
 	layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same")(inputs)
 	layer2 = ELU()(layer1)
@@ -94,26 +104,30 @@ except:
 	layer16 = Dropout(drop_prob)(layer15)
 	prediction = Dense(1)(layer16)
 
+	#2.2.3 Initialize model
 	model = Model(input = inputs, output = prediction)
 
 	print("New model generated in this session according to specifications")
 	print()
 
+	# Set imported-markers to "True" for future reference
 	model_imported = False
 	weights_imported = False
 	
-
-#4 Compile model; if model.h5 available use these weigts to initialize, else random weigths
+#3 Compile model; if model.h5 available use these weigts to initialize, else random weigths
 model.compile(optimizer = "Adam", loss = "binary_crossentropy", metrics = ["accuracy"])
 
-#5 Train model
+#4 Train model
 model.fit(X_train,y_train, batch_size = batch_size, nb_epoch = nb_epoch, validation_data = (X_val,y_val),shuffle = True)
 
-#6 Save model to model.json and weights to model.h5
-# Save model to json
+#5 Save model to model.json and weights to model.h5
+#5.1 Save model to model.json
+#5.1.1 If model was already imported model.json does not need to be updated
 if model_imported == True:
 	print("Model not saved as model was already imported from 'model.json'")
 	print()
+
+#5.1.2 Save model to model.json (only if model was newly created)
 else:
 	model_json = model.to_json()
 	with open("model.json","w") as f:
@@ -121,7 +135,7 @@ else:
 	print("Model was saved to 'model.json'")
 	print()
 
-# Save weights
+#5.2 Save weights to model.h5 (if user wants to update them)
 if weights_imported == True:
 	save_weights = input("Do you want to save the trained weights [y/n]? If you don't save the weights the training effect of this run will be lost: ")
 	while save_weights not in ["y","n"]:

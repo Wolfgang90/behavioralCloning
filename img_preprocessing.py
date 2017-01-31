@@ -2,62 +2,66 @@ from scipy import misc
 import pickle
 import csv
 import numpy as np
+import pandas as pd
 
-# Preprocess image:
-def preprocess_image(name,size):
+# Load and preprocess image (subfunction of load_preprocess_pickle_data_from_initial_file())
+def load_and_preprocess_image(name,size):
+	
+	# Read image
 	img = misc.imread(name)
+
+	# Resize image
 	img = misc.imresize(img,size)
+
+	# Set image values to "float32"
 	img = img.astype("float32")
-	img = (img/255)-0.5
-	img = img[np.newaxis,:]
+
+	# Normalize image values between -1 and 1
+	img = (img/127.5)-1
+
 	return img
 
 
-def load_data_from_pickle():
-		
-	with open("behavioral_cloning_X.p","rb") as f:
-		X = pickle.load(f)
+# If data is not already converted and stored in pickle file yet
+# Load and convert data; store preprocessed data in pickle files
+def load_preprocess_pickle_data_from_initial_file(image_rescale_size):
+	
+	# Import csv-file to be used as basic data reference
+	csv_data = pd.read_csv("driving_log.csv")
 
-	with open("behavioral_cloning_y.p","rb") as f:
-		y = pickle.load(f)
-	print("Data was loaded from pickle files 'behavioral_cloning_X.p' and 'behavioral_cloning_y.p'")
+	# Load and preprocess images
+	X = []
+	for img in csv_data["center"]:
+		X.append(load_and_preprocess_image(img,image_rescale_size))
+	X = np.array(X)
+
+	# Load image labels
+	y = np.array(csv_data["steering"])
+
+	# Dump preprocessed X in pickle file for future reuse
+	with open("behavioral_cloning_X.p","wb") as f:
+		pickle.dump(X,f)
+
+	# Dump preprocessed y in pickle file for future reuse
+	with open("behavioral_cloning_y.p","wb") as f:
+		pickle.dump(y,f)
+
+	print("Data was converted and stored in the pickle files 'behavioral_cloning_X.p' and 'behavioral_cloning_y.p' for future use")
 	print()
 	return X,y
 
-	# If required data was not converted yet, it is converted and eventually stored in a pickle file
-def load_preprocess_pickle_data_from_initial_file():
-	# Import image names from csv-file
-	with open("driving_log.csv","rt") as csvfile:
-		file = csv.reader(csvfile, delimiter = ",")
-		image_name = list(list(zip(*file))[0])
 
-	# Import steering angles from csv-file
-	with open("driving_log.csv","rt") as csvfile:
-		file = csv.reader(csvfile, delimiter = ",")	
-		steering_angle = list(list(zip(*file))[3])
+# Load data from pickle file (used if pickle files are available)
+def load_data_from_pickle():
+		
+	# Load X from pickle file
+	with open("behavioral_cloning_X.p","rb") as f:
+		X = pickle.load(f)
 
-	# Modify csv-input
-	# if csv-file with header (Udacity standard input)
-	if image_name[0] == "center":
-		image_name = [name[name.find("IMG/"):] for name in image_name[1:]]
-		y = np.array([float(angle) for angle in steering_angle[1:]])
+	# Load y from pickle file
+	with open("behavioral_cloning_y.p","rb") as f:
+		y = pickle.load(f)
 
-	# if csv-file without header (Self-generated input with simulator)
-	else:
-		image_name = [name[name.find("IMG/"):] for name in image_name]
-		y = np.array([float(angle) for angle in steering_angle])
-
-	# Load first image file and add additional axis for images
-	X = preprocess_image(image_name[0],(32,32))
-
-	# Load all other image files
-	for i in image_name[1:]:
-		X = np.concatenate((X, preprocess_image(i,(32,32))), axis = 0)
-
-	with open("behavioral_cloning_X.p","wb") as f:
-		pickle.dump(X,f)
-	with open("behavioral_cloning_y.p","wb") as f:
-		pickle.dump(y,f)
-	print("Data was converted and stored in the pickle files 'behavioral_cloning_X.p' and 'behavioral_cloning_y.p' for future use")
+	print("Data loaded from pickle files 'behavioral_cloning_X.p' and 'behavioral_cloning_y.p'")
 	print()
 	return X,y
