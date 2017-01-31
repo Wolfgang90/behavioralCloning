@@ -4,12 +4,14 @@ import csv
 import numpy as np
 import pandas as pd
 
-# Load and preprocess image (subfunction of load_preprocess_pickle_data_from_initial_file())
-def load_and_preprocess_image(name,size):
-	
+# Load image (subfunction of load_preprocess_pickle_data_from_initial_file())
+def load_image(name):
 	# Read image
-	img = misc.imread(name)
+	return misc.imread(name)
 
+# Preprocess image (subfunction of load_preprocess_pickle_data_from_initial_file())
+def preprocess_image(img, size):
+	
 	# Resize image
 	img = misc.imresize(img,size)
 
@@ -32,7 +34,7 @@ def load_preprocess_pickle_data_from_initial_file(image_rescale_size):
 	# Load and preprocess images
 	X = []
 	for img in csv_data["center"]:
-		X.append(load_and_preprocess_image(img,image_rescale_size))
+		X.append(preprocess_image(load_image(img),image_rescale_size))
 	X = np.array(X)
 
 	# Load image labels

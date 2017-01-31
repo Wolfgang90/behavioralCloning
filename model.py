@@ -43,8 +43,8 @@ print()
 #2 Define model or load the model
 
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
-batch_size = 128
-nb_epoch = 1
+batch_size = 256
+nb_epoch = 10
 
 #2.1 Import stored model and weights from previous training session (if available)
 try:
@@ -86,23 +86,18 @@ except:
 	inputs = Input(shape=(32, 32, 3))
 
 	# 2d Convolution 32 layers, (3,3) Kernel size
-	layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same")(inputs)
-	layer2 = ELU()(layer1)
-	layer3 = MaxPooling2D(kernel_size_pool,border_mode = "same")(layer2)
-	layer4 = Dropout(drop_prob)(layer3)
-	layer5 = Convolution2D(nb_filter2,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same")(layer4)
-	layer6 = ELU()(layer5)
-	layer7 = Convolution2D(nb_filter3,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same")(layer6)
-	layer8 = ELU()(layer7)
-	layer9 = Convolution2D(nb_filter4,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same")(layer8)
-	layer10 = Flatten()(layer9)
-	layer11 = Dense(64)(layer10)
-	layer12 = ELU()(layer11)
-	layer13 = Dropout(drop_prob)(layer12)
-	layer14 = Dense(16)(layer13)
-	layer15 = ELU()(layer14)
-	layer16 = Dropout(drop_prob)(layer15)
-	prediction = Dense(1)(layer16)
+	layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same", activation = "elu")(inputs)
+	layer2 = MaxPooling2D(kernel_size_pool,border_mode = "same")(layer1)
+	layer3 = Dropout(drop_prob)(layer2)
+	layer4 = Convolution2D(nb_filter2,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer3)
+	layer5 = Convolution2D(nb_filter3,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer4)
+	layer6 = Convolution2D(nb_filter4,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer5)
+	layer7 = Flatten()(layer6)
+	layer8 = Dense(64, activation = "elu")(layer7)
+	layer9 = Dropout(drop_prob)(layer8)
+	layer10 = Dense(16, activation = "elu")(layer9)
+	layer11 = Dropout(drop_prob)(layer10)
+	prediction = Dense(1)(layer11)
 
 	#2.2.3 Initialize model
 	model = Model(input = inputs, output = prediction)
