@@ -21,7 +21,8 @@ tf.python.control_flow_ops = tf
 
 import img_preprocessing
 
-image_rescale_size = (32,32)
+image_rescale_size = (32,128)
+color_channel = "g"
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -40,8 +41,11 @@ def telemetry(sid, data):
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
-    image_array = img_preprocessing.preprocess_image(image_array,image_rescale_size)
-    transformed_image_array = image_array[None, :, :, :]
+    #image_array = img_preprocessing.preprocess_image(image_array,image_rescale_size)
+    cropped_image = img_preprocessing.crop_image(image_array)
+    color_channel_image = img_preprocessing.select_color_channel(cropped_image,color_channel)
+    final_image = img_preprocessing.preprocess_image(color_channel_image,image_rescale_size)
+    transformed_image_array = final_image[None, :, :, np.newaxis]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
     # The driving model currently just outputs a constant throttle. Feel free to edit this.
@@ -73,7 +77,7 @@ if __name__ == '__main__':
         # NOTE: if you saved the file by calling json.dump(model.to_json(), ...)
         # then you will have to call:
         #
-        model = model_from_json(json.loads(jfile.read()))\
+        model = model_from_json(json.loads(jfile.read()))
         #
         # instead.
         #model = model_from_json(jfile.read())

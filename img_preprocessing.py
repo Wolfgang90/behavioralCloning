@@ -11,7 +11,7 @@ def load_image(name):
 	return misc.imread(name)
 
 def crop_image(img):
-	return img[50:130,:,:]
+	return img[56:120,:,:]
 
 def select_color_channel(img,color_channel):
 	if color_channel == "r":

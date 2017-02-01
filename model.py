@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 #1 Import and preprocess data
 
 #1.0 Hyperparameter:
-image_rescale_size = (16,64)
+image_rescale_size = (32,128)
 #Selected green color channel as it displayed the most contrast between track and off-track
 color_channel = "g"
 
@@ -46,8 +46,8 @@ print()
 #2 Define model or load the model
 
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
-batch_size = 128
-nb_epoch = 10
+batch_size = 64
+nb_epoch = 5
 
 #2.1 Import stored model and weights from previous training session (if available)
 try:
@@ -113,10 +113,10 @@ except:
 	weights_imported = False
 	
 #3 Compile model; if model.h5 available use these weigts to initialize, else random weigths
-model.compile(optimizer = "Adam", loss = "binary_crossentropy", metrics = ["accuracy"])
+model.compile(optimizer = "Adam", loss = "mse", metrics = ["accuracy"])
 
 #4 Train model
-model.fit(X_train,y_train, batch_size = batch_size, nb_epoch = nb_epoch, validation_data = (X_val,y_val),shuffle = True)
+model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epoch, validation_data = (X_val,y_val),shuffle = True)
 
 #5 Save model to model.json and weights to model.h5
 #5.1 Save model to model.json
@@ -153,4 +153,3 @@ else:
 #Print an overview of the model
 print("MODEL SUMMARY")
 print(model.summary())
-
