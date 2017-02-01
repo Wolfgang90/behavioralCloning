@@ -9,6 +9,7 @@ from keras.layers.advanced_activations import ELU
 from keras.models import Model, model_from_json
 import json
 import os.path
+import matplotlib.pyplot as plt
 
 
 
@@ -16,7 +17,9 @@ import os.path
 #1 Import and preprocess data
 
 #1.0 Hyperparameter:
-image_rescale_size = (32,32)
+image_rescale_size = (16,64)
+#Selected green color channel as it displayed the most contrast between track and off-track
+color_channel = "g"
 
 #1.1 If pickle file with already converted data is available, load pickle file
 try:
@@ -24,7 +27,7 @@ try:
 
 #1.2 If no pickle file available, preprocess data
 except:
-	X,y = img_preprocessing.load_preprocess_pickle_data_from_initial_file(image_rescale_size)
+	X,y = img_preprocessing.load_preprocess_pickle_data_from_initial_file(image_rescale_size, color_channel)
 
 #1.3 Split data into training and validation data
 
@@ -43,7 +46,7 @@ print()
 #2 Define model or load the model
 
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
-batch_size = 256
+batch_size = 128
 nb_epoch = 10
 
 #2.1 Import stored model and weights from previous training session (if available)
@@ -83,12 +86,12 @@ except:
 	#2.2.2 Define model layers
 
 	# Define input tensor
-	inputs = Input(shape=(32, 32, 3))
+	inputs = Input(shape=(image_rescale_size[0], image_rescale_size[1], 1))
 
 	# 2d Convolution 32 layers, (3,3) Kernel size
 	layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same", activation = "elu")(inputs)
 	layer2 = MaxPooling2D(kernel_size_pool,border_mode = "same")(layer1)
-	layer3 = Dropout(drop_prob)(layer2)
+	layer3 = Dropout(drop_prob)(layer1)
 	layer4 = Convolution2D(nb_filter2,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer3)
 	layer5 = Convolution2D(nb_filter3,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer4)
 	layer6 = Convolution2D(nb_filter4,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer5)
