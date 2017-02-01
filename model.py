@@ -29,16 +29,14 @@ try:
 except:
 	X,y = img_preprocessing.load_preprocess_pickle_data_from_initial_file(image_rescale_size, color_channel)
 
-#1.3 Split data into training and validation data
+#1.3 Split data into training and test data
 
 X, y = shuffle(X,y)
-X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.1)
-X_train,X_val,y_train,y_val = train_test_split(X_train,y_train, test_size = 0.2)
+X_train,X_test,y_train,y_test = train_test_split(X,y, test_size = 0.1)
 
-print("The final training, validation and test set sizes are:")
+print("The final training and test set sizes are:")
 print()
 print("Train set size: {}".format(X_train.shape))
-print("Validation set size: {}".format(X_val.shape))
 print("Test set size: {}".format(X_test.shape))
 print()
 
@@ -46,7 +44,7 @@ print()
 #2 Define model or load the model
 
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
-batch_size = 64
+batch_size = 128
 nb_epoch = 5
 
 #2.1 Import stored model and weights from previous training session (if available)
@@ -71,14 +69,14 @@ except:
 
 	#2.2.1 Model hyperparameters
 	#2.2.1.1 Convolution - Number of output filters
-	nb_filter1 = 32
-	nb_filter2 = 64
-	nb_filter3 = 96
-	nb_filter4 = 96
+	nb_filter1 = 24
+	nb_filter2 = 36
+	nb_filter3 = 48
+	nb_filter4 = 64
 
 	#2.2.1.2 Kernel size
 	kernel_size_conv = (3,3)
-	kernel_size_pool =(2,2)
+	kernel_size_pool = (2,2)
 
 	#2.2.1.3 Dropout
 	drop_prob = 0.3
@@ -89,17 +87,18 @@ except:
 	inputs = Input(shape=(image_rescale_size[0], image_rescale_size[1], 1))
 
 	# 2d Convolution 32 layers, (3,3) Kernel size
-	layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same", activation = "elu")(inputs)
-	layer2 = MaxPooling2D(kernel_size_pool,border_mode = "same")(layer1)
-	layer3 = Dropout(drop_prob)(layer1)
-	layer4 = Convolution2D(nb_filter2,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer3)
-	layer5 = Convolution2D(nb_filter3,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer4)
-	layer6 = Convolution2D(nb_filter4,kernel_size_pool[0],kernel_size_conv[1],border_mode = "same", activation = "elu")(layer5)
+	layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same", activation = "relu")(inputs)
+	layer2 = Dropout(drop_prob)(layer1)
+	layer3 = Convolution2D(nb_filter2,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same", activation = "relu")(layer2)
+	layer4 = MaxPooling2D(border_mode = "same", pool_size = kernel_size_pool)(layer3)
+	layer5 = Convolution2D(nb_filter3,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same", activation = "relu")(layer4)
+	layer6 = Convolution2D(nb_filter4,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same", activation = "relu")(layer5)
 	layer7 = Flatten()(layer6)
-	layer8 = Dense(64, activation = "elu")(layer7)
+	layer8 = Dense(64, activation = "relu")(layer7)
 	layer9 = Dropout(drop_prob)(layer8)
-	layer10 = Dense(16, activation = "elu")(layer9)
+	layer10 = Dense(16, activation = "relu")(layer9)
 	layer11 = Dropout(drop_prob)(layer10)
+	layer12 = Dense(16, activation = "relu")(layer11)
 	prediction = Dense(1)(layer11)
 
 	#2.2.3 Initialize model
@@ -113,10 +112,10 @@ except:
 	weights_imported = False
 	
 #3 Compile model; if model.h5 available use these weigts to initialize, else random weigths
-model.compile(optimizer = "Adam", loss = "mse", metrics = ["accuracy"])
+model.compile(optimizer = "adam", loss = "mse", metrics = ["accuracy"])
 
 #4 Train model
-model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epoch, validation_data = (X_val,y_val),shuffle = True)
+model.fit(X_train, y_train, batch_size = batch_size, nb_epoch = nb_epoch, shuffle = True)
 
 #5 Save model to model.json and weights to model.h5
 #5.1 Save model to model.json
