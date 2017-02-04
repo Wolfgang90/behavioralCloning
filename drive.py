@@ -12,17 +12,18 @@ from PIL import ImageOps
 from flask import Flask, render_template
 from io import BytesIO
 
+from keras.optimizers import Adam
+
 from keras.models import model_from_json
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
+
+from scipy import misc
 
 # Fix error with Keras and TensorFlow
 import tensorflow as tf
 tf.python.control_flow_ops = tf
 
 import img_preprocessing
-
-image_rescale_size = (32,128)
-color_channel = "g"
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -40,18 +41,18 @@ def telemetry(sid, data):
     # The current image from the center camera of the car
     imgString = data["image"]
     image = Image.open(BytesIO(base64.b64decode(imgString)))
-    image_array = np.asarray(image)
-    #image_array = img_preprocessing.preprocess_image(image_array,image_rescale_size)
-    cropped_image = img_preprocessing.crop_image(image_array)
-    color_channel_image = img_preprocessing.select_color_channel(cropped_image,color_channel)
-    final_image = img_preprocessing.preprocess_image(color_channel_image,image_rescale_size)
-    transformed_image_array = final_image[None, :, :, np.newaxis]
+    image_array = np.asarray(image) 
+    image_array = image_array[56:120]
+    final_image = misc.imresize(image_array,(32,160,3))
+    transformed_image_array = final_image[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
     # The driving model currently just outputs a constant throttle. Feel free to edit this.
     throttle = 0.2
+    # The driving model currently just outputs a constant throttle. Feel free to edit this.
     print(steering_angle, throttle)
     send_control(steering_angle, throttle)
+
 
 
 @sio.on('connect')
@@ -82,8 +83,8 @@ if __name__ == '__main__':
         # instead.
         #model = model_from_json(jfile.read())
 
-
-    model.compile("adam", "mse")
+    optimizer = Adam(lr = 0.0001)
+    model.compile(optimizer = optimizer, loss = "mse", metrics = ["accuracy"])
     weights_file = args.model.replace('json', 'h5')
     model.load_weights(weights_file)
 
@@ -92,3 +93,23 @@ if __name__ == '__main__':
 
     # deploy as an eventlet WSGI server
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
+
+
+
+def crop_image(img):
+    return img[56:120,:,:]
+
+def resize_image(img, image_rescale_size):
+    return misc.imresize(img,image_rescale_size)
+
+
+# Define function to reduce image to one image channel
+def select_color_channel(img,color_channel = None):
+    if color_channel == "r":
+        return img[:,:,0]
+    elif color_channel == "g":
+        return img[:,:,1]
+    elif color_channel == "b":
+        return img[:,:,2]
+    else:
+        return img
