@@ -43,8 +43,10 @@ def telemetry(sid, data):
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image) 
     image_array = image_array[56:120]
-    final_image = misc.imresize(image_array,(32,160,3))
-    transformed_image_array = final_image[None, :, :, :]
+    image_array = misc.imresize(image_array,(24,120,3))
+    #image_array = image_array[:,:,1]
+    #image_array = image_array[:,:,np.newaxis]    
+    transformed_image_array = image_array[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
     # The driving model currently just outputs a constant throttle. Feel free to edit this.

@@ -8,7 +8,7 @@ from keras.layers import Input, Lambda, Convolution2D, Dense, Dropout
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.advanced_activations import ELU
 from keras.optimizers import Adam
-from keras.models import Model
+from keras.models import Model, model_from_json
 from scipy import misc
 import math
 import random
@@ -33,10 +33,18 @@ print("Validation set size: {}".format(len(val)))
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
 epochs = 10
 batch_size = 128
-camera_steering_adjustment = 0.3
-image_rescale_size = (32,160,3)
+camera_steering_adjustment = 0.1
 color_channel = None
-flip_prob = 0.2
+if color_channel:
+    nb_color_channel = 1
+else:
+    nb_color_channel = 3
+image_rescale_size = (24,120,3)
+image_final_size = (24,120,nb_color_channel)
+flip_prob = 0.5
+
+
+
 
 #2.1 Import stored model and weights from previous training session (if available)
 try:
@@ -52,6 +60,8 @@ try:
     # Set imported-markers to "True" for future reference
     model_imported = True
     weights_imported = True
+
+
 
 #2.2 Define model (if no model and weights available from previous sessions)
 except:
@@ -72,7 +82,7 @@ except:
     #2.2.2 Define model layers
 
     # Define input tensor
-    inputs = Input(shape=image_rescale_size)
+    inputs = Input(shape=image_final_size)
 
     # Layer
     layer0 = Lambda(lambda x: x/127.5 - 1.)(inputs)
@@ -111,6 +121,7 @@ except:
 optimizer = Adam(lr = 0.0001)
 model.compile(optimizer = optimizer, loss = "mse", metrics = ["accuracy"])
 
+
 # Define function for loading single image
 # Input: data -> Train or validation file; camera_position (left,right,center); 
 # Camera_steering adjustment -> Tupel for steering adjustments (left_adj (typically positive as move to the right/center required), center_adj, right_adj(typically negative as move to the left/center required))
@@ -144,13 +155,15 @@ def resize_image(img, image_rescale_size):
 # Define function to reduce image to one image channel
 def select_color_channel(img,color_channel = None):
     if color_channel == "r":
-        return img[:,:,0]
+        img = img[:,:,0]
+        return img[:,:,np.newaxis]
     elif color_channel == "g":
-        return img[:,:,1]
+        img = img[:,:,1]
+        return img[:,:,np.newaxis]
     elif color_channel == "b":
-        return img[:,:,2]
-    else:
-        return img
+        img = img[:,:,2]
+        return img[:,:,np.newaxis]
+    return img
     
 def flip_image(img,angle):
     img = flip_axis(img,1)
@@ -164,15 +177,16 @@ import random
 
 # Image rescaling to be implemented!!!
 class BatchDataGenerator:
-    def __init__(self, data, batch_size, image_rescale_size, camera_steering_adjustment = 0, color_channel = None, flip_prob = 0):
+    def __init__(self, data, batch_size, image_rescale_size, image_final_size, camera_steering_adjustment = 0, color_channel = None, flip_prob = 0):
         self.data = data
         self.batch_size = batch_size
         self.camera_steering_adjustment = camera_steering_adjustment
         self.image_rescale_size = image_rescale_size
+        self.image_final_size = image_final_size
         self.color_channel = color_channel
         self.flip_prob = flip_prob
         self.counter = 0
-        self.X_batch = np.zeros((batch_size, *image_rescale_size))
+        self.X_batch = np.zeros((batch_size, *image_final_size))
         self.y_batch = np.zeros(batch_size)
         self.data = data.sample(frac=1).reset_index(drop=True)
         self.available_examples = len(data)
@@ -196,14 +210,15 @@ class BatchDataGenerator:
                 X,y = load_image_and_steering_angle(self.data, camera_position, self.camera_steering_adjustment, data_position = self.counter)
                 
                 X = crop_image(X)
-                
+
                 X = resize_image(X, image_rescale_size)
 
-                X = select_color_channel(X,self.color_channel)
-                
                 if np.random.choice((True,False), p=[self.flip_prob,1-self.flip_prob]):
                     X, y = flip_image(X,y)
-                
+
+                X = select_color_channel(X, self.color_channel)
+
+                         
                 self.X_batch[batch] = X
                 self.y_batch[batch] = y         
                 self.counter += 1
@@ -212,10 +227,10 @@ class BatchDataGenerator:
 
 # Fit the model
 
-train_generator = BatchDataGenerator(data = train, batch_size = batch_size, image_rescale_size = image_rescale_size,
+train_generator = BatchDataGenerator(data = train, batch_size = batch_size, image_rescale_size = image_rescale_size, image_final_size = image_final_size,
                                      camera_steering_adjustment = camera_steering_adjustment, 
                                      color_channel = color_channel, flip_prob = flip_prob)
-val_generator = BatchDataGenerator(data = val, batch_size = batch_size, image_rescale_size = image_rescale_size,
+val_generator = BatchDataGenerator(data = val, batch_size = batch_size, image_rescale_size = image_rescale_size, image_final_size = image_final_size,
                                      color_channel = color_channel)
 
 model.fit_generator(generator = train_generator,samples_per_epoch= train_samples, 
