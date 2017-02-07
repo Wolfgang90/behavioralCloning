@@ -17,7 +17,14 @@ import json
 # Import csv-data
 csv_data = pd.read_csv("data/driving_log.csv")
 
-csv_data[""]
+# Remove data with throttle < 0.5
+csv_data = csv_data.loc[csv_data["throttle"] > 0.5]
+
+# Additionally add flipped data for data with strong steering angles
+csv_data["to_be_flipped"] = np.zeros(len(csv_data))
+extreem_steering = csv_data[csv_data["steering"]>0.15].copy()
+extreem_steering["to_be_flipped"] = extreem_steering["to_be_flipped"].apply(lambda x: x +1)
+csv_data = csv_data.append(extreem_steering,ignore_index=True)
 
 # Shuffle csv-data
 csv_data = shuffle(csv_data)
@@ -131,7 +138,7 @@ def load_image_and_steering_angle(data, camera_position, camera_steering_adjustm
     name = "data/{}".format(data[camera_position][data_position].strip())  
     X = misc.imread(name)
     X = X.astype("float32")
-    
+
     if camera_position == "left": 
         steering_adj = camera_steering_adjustment
     if camera_position == "center":
@@ -140,6 +147,9 @@ def load_image_and_steering_angle(data, camera_position, camera_steering_adjustm
         steering_adj = -camera_steering_adjustment
     
     y = data["steering"][data_position] + steering_adj
+
+    if data["to_be_flipped"][data_position]:
+        X, y = flip_image(X,y)
     
     return X,y
         
