@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 from keras.layers.core import Flatten
 from keras.preprocessing.image import flip_axis
 from keras.layers import Input, Lambda, Convolution2D, Dense, Dropout
@@ -17,8 +17,10 @@ import json
 # Import csv-data
 csv_data = pd.read_csv("data/driving_log.csv")
 
+csv_data[""]
+
 # Shuffle csv-data
-csv_data = csv_data.reindex(np.random.permutation(csv_data.index))
+csv_data = shuffle(csv_data)
 
 # Split csv_data
 train, val = train_test_split(csv_data,test_size = 0.1)
@@ -31,19 +33,17 @@ print("Validation set size: {}".format(len(val)))
 
 
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
-epochs = 3
-batch_size = 128
+epochs = 5
+batch_size = 256
 camera_steering_adjustment = 0.15
-color_channel = "g"
+color_channel = None
 if color_channel:
     nb_color_channel = 1
 else:
     nb_color_channel = 3
-image_rescale_size = (24,120,3)
-image_final_size = (24,120,nb_color_channel)
-flip_prob = 0.5
-
-
+image_rescale_size = (64,128,3)
+image_final_size = (64,128,nb_color_channel)
+flip_prob = 0.3
 
 
 #2.1 Import stored model and weights from previous training session (if available)
@@ -67,10 +67,10 @@ try:
 except:
     #2.2.1 Model hyperparameters
     #2.2.1.1 Convolution - Number of output filters
-    nb_filter1 = 24
-    nb_filter2 = 36
-    nb_filter3 = 48
-    nb_filter4 = 64
+    nb_filter1 = 4
+    nb_filter2 = 8
+    nb_filter3 = 12
+    nb_filter4 = 12
 
     #2.2.1.2 Kernel size
     kernel_size_conv = (3,3)
@@ -91,19 +91,19 @@ except:
     layer2 = Dropout(drop_prob)(layer1)
     layer3 = Convolution2D(nb_filter2,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer2)
     layer3 = ELU()(layer3)
-    layer4 = MaxPooling2D(border_mode = "same", pool_size = kernel_size_pool)(layer3)
-    layer5 = Convolution2D(nb_filter3,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer4)
+    #layer4 = MaxPooling2D(border_mode = "same", pool_size = kernel_size_pool)(layer3)
+    layer5 = Convolution2D(nb_filter3,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer3)
     layer5 = ELU()(layer5)
-    layer6 = Convolution2D(nb_filter4,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer5)
-    layer6 = ELU()(layer6)
-    layer7 = Flatten()(layer6)
-    layer8 = Dense(64)(layer7)
+    #layer6 = Convolution2D(nb_filter4,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer5)
+    #layer6 = ELU()(layer6)
+    layer7 = Flatten()(layer5)
+    layer8 = Dense(32)(layer7)
     layer8 = ELU()(layer8)
     layer9 = Dropout(drop_prob)(layer8)
     layer10 = Dense(16)(layer9)
     layer10 = ELU()(layer10)
     layer11 = Dropout(drop_prob)(layer10)
-    layer12 = Dense(16)(layer11)
+    layer12 = Dense(8)(layer11)
     layer12 = ELU()(layer12)
     prediction = Dense(1)(layer11)
 
