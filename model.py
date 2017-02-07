@@ -31,10 +31,10 @@ print("Validation set size: {}".format(len(val)))
 
 
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
-epochs = 10
+epochs = 3
 batch_size = 128
-camera_steering_adjustment = 0.1
-color_channel = None
+camera_steering_adjustment = 0.15
+color_channel = "g"
 if color_channel:
     nb_color_channel = 1
 else:
@@ -233,10 +233,10 @@ train_generator = BatchDataGenerator(data = train, batch_size = batch_size, imag
 val_generator = BatchDataGenerator(data = val, batch_size = batch_size, image_rescale_size = image_rescale_size, image_final_size = image_final_size,
                                      color_channel = color_channel)
 
-model.fit_generator(generator = train_generator,samples_per_epoch= train_samples, 
+samples_per_epoch = int(len(train)/batch_size) * batch_size
+print("Samples epoch:" + str(samples_per_epoch))
+model.fit_generator(generator = train_generator,samples_per_epoch= samples_per_epoch, 
                     nb_epoch = epochs, validation_data = val_generator, nb_val_samples = validation_samples)
-
-
 
 
 #5 Save model to model.json and weights to model.h5

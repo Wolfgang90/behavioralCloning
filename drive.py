@@ -23,8 +23,6 @@ from scipy import misc
 import tensorflow as tf
 tf.python.control_flow_ops = tf
 
-import img_preprocessing
-
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
@@ -44,8 +42,8 @@ def telemetry(sid, data):
     image_array = np.asarray(image) 
     image_array = image_array[56:120]
     image_array = misc.imresize(image_array,(24,120,3))
-    #image_array = image_array[:,:,1]
-    #image_array = image_array[:,:,np.newaxis]    
+    image_array = image_array[:,:,1]
+    image_array = image_array[:,:,np.newaxis]    
     transformed_image_array = image_array[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
@@ -95,23 +93,3 @@ if __name__ == '__main__':
 
     # deploy as an eventlet WSGI server
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
-
-
-
-def crop_image(img):
-    return img[56:120,:,:]
-
-def resize_image(img, image_rescale_size):
-    return misc.imresize(img,image_rescale_size)
-
-
-# Define function to reduce image to one image channel
-def select_color_channel(img,color_channel = None):
-    if color_channel == "r":
-        return img[:,:,0]
-    elif color_channel == "g":
-        return img[:,:,1]
-    elif color_channel == "b":
-        return img[:,:,2]
-    else:
-        return img
