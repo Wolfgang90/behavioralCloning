@@ -48,8 +48,8 @@ if color_channel:
     nb_color_channel = 1
 else:
     nb_color_channel = 3
-image_rescale_size = (64,128,3)
-image_final_size = (64,128,nb_color_channel)
+image_rescale_size = (64,64,3)
+image_final_size = (64,64,nb_color_channel)
 flip_prob = 0.3
 
 
@@ -77,7 +77,7 @@ except:
     nb_filter1 = 4
     nb_filter2 = 8
     nb_filter3 = 12
-    nb_filter4 = 12
+    nb_filter4 = 16
 
     #2.2.1.2 Kernel size
     kernel_size_conv = (3,3)
@@ -154,9 +154,9 @@ def load_image_and_steering_angle(data, camera_position, camera_steering_adjustm
     return X,y
         
 
-# Define function for cropping single image
-def crop_image(img):
-    return img[56:120,:,:]
+# Define function for selecting relevant image regions
+def select_relevant_image_regions(img):
+    return np.concatenate((img[60:124,:120,:],img[60:124,200:,:]),axis = 1)
 
 def resize_image(img, image_rescale_size):
     return misc.imresize(img,image_rescale_size)
@@ -219,9 +219,9 @@ class BatchDataGenerator:
                     
                 X,y = load_image_and_steering_angle(self.data, camera_position, self.camera_steering_adjustment, data_position = self.counter)
                 
-                X = crop_image(X)
+                X = select_relevant_image_regions(X)
 
-                X = resize_image(X, image_rescale_size)
+                X = resize_image(X, self.image_rescale_size)
 
                 if np.random.choice((True,False), p=[self.flip_prob,1-self.flip_prob]):
                     X, y = flip_image(X,y)
