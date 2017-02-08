@@ -106,7 +106,7 @@ except:
     layer0 = Lambda(lambda x: x/127.5 - 1.)(inputs)
     layer1 = Convolution2D(nb_filter1,kernel_size_conv_1[0],kernel_size_conv_1[1],activation = "relu", border_mode = "valid", subsample = stride_1)(layer0)
     #layer1 = ELU()(layer1)
-    #layer2 = Dropout(drop_prob)(layer1)
+    layer2 = Dropout(0.3)(layer1)
     layer3 = Convolution2D(nb_filter2,kernel_size_conv_2[0],kernel_size_conv_2[1],activation = "relu", border_mode = "valid", subsample = stride_2)(layer1)
     #layer3 = ELU()(layer3)
     #layer4 = MaxPooling2D(border_mode = "same", pool_size = kernel_size_pool)(layer3)
