@@ -51,7 +51,7 @@ else:
     nb_color_channel = 3
 image_rescale_size = (66,200,3)
 image_final_size = (66,200,nb_color_channel)
-flip_prob = 0
+flip_prob = 0.4
 
 
 #2.1 Import stored model and weights from previous training session (if available)
