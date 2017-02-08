@@ -21,8 +21,9 @@ csv_data = pd.read_csv("data/driving_log.csv")
 csv_data = csv_data.loc[csv_data["throttle"] > 0.5]
 
 # Additionally add flipped data for data with strong steering angles
+
 csv_data["to_be_flipped"] = np.zeros(len(csv_data))
-extreem_steering = csv_data[csv_data["steering"]>0.15].copy()
+extreem_steering = csv_data[csv_data["steering"]>0.10].copy()
 extreem_steering["to_be_flipped"] = extreem_steering["to_be_flipped"].apply(lambda x: x +1)
 csv_data = csv_data.append(extreem_steering,ignore_index=True)
 
@@ -41,16 +42,16 @@ print("Validation set size: {}".format(len(val)))
 
 #2.0 Hyperparameters (only for overall training, for model specific hyperparameters go to next "except:")
 epochs = 5
-batch_size = 256
+batch_size = 64
 camera_steering_adjustment = 0.15
 color_channel = None
 if color_channel:
     nb_color_channel = 1
 else:
     nb_color_channel = 3
-image_rescale_size = (64,64,3)
-image_final_size = (64,64,nb_color_channel)
-flip_prob = 0.3
+image_rescale_size = (66,200,3)
+image_final_size = (66,200,nb_color_channel)
+flip_prob = 0
 
 
 #2.1 Import stored model and weights from previous training session (if available)
@@ -74,13 +75,23 @@ try:
 except:
     #2.2.1 Model hyperparameters
     #2.2.1.1 Convolution - Number of output filters
-    nb_filter1 = 4
-    nb_filter2 = 8
-    nb_filter3 = 12
-    nb_filter4 = 16
+    nb_filter1 = 24
+    nb_filter2 = 36
+    nb_filter3 = 48
+    nb_filter4 = 64
+    nb_filter5 = 64
 
     #2.2.1.2 Kernel size
-    kernel_size_conv = (3,3)
+    stride_1 = (2,2)
+    stride_2 = (2,2)
+    stride_3 = (2,2)
+    stride_4 = (1,1)
+    stride_5 = (1,1)
+    kernel_size_conv_1 = (5,5)
+    kernel_size_conv_2 = (5,5)
+    kernel_size_conv_3 = (5,5)
+    kernel_size_conv_4 = (3,3)
+    kernel_size_conv_5 = (3,3)
     kernel_size_pool = (2,2)
 
     #2.2.1.3 Dropout
@@ -93,25 +104,26 @@ except:
 
     # Layer
     layer0 = Lambda(lambda x: x/127.5 - 1.)(inputs)
-    layer1 = Convolution2D(nb_filter1,kernel_size_conv[0],kernel_size_conv[1], border_mode = "same")(layer0)
-    layer1 = ELU()(layer1)
-    layer2 = Dropout(drop_prob)(layer1)
-    layer3 = Convolution2D(nb_filter2,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer2)
-    layer3 = ELU()(layer3)
+    layer1 = Convolution2D(nb_filter1,kernel_size_conv_1[0],kernel_size_conv_1[1],activation = "relu", border_mode = "valid", subsample = stride_1)(layer0)
+    #layer1 = ELU()(layer1)
+    #layer2 = Dropout(drop_prob)(layer1)
+    layer3 = Convolution2D(nb_filter2,kernel_size_conv_2[0],kernel_size_conv_2[1],activation = "relu", border_mode = "valid", subsample = stride_2)(layer1)
+    #layer3 = ELU()(layer3)
     #layer4 = MaxPooling2D(border_mode = "same", pool_size = kernel_size_pool)(layer3)
-    layer5 = Convolution2D(nb_filter3,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer3)
-    layer5 = ELU()(layer5)
-    #layer6 = Convolution2D(nb_filter4,kernel_size_conv[0],kernel_size_conv[1],border_mode = "same")(layer5)
+    layer5 = Convolution2D(nb_filter3,kernel_size_conv_3[0],kernel_size_conv_3[1],activation = "relu", border_mode = "valid", subsample = stride_3)(layer3)
+    #layer5 = ELU()(layer5)
+    layer6 = Convolution2D(nb_filter4,kernel_size_conv_4[0],kernel_size_conv_4[1],activation = "relu", border_mode = "valid", subsample = stride_4)(layer5)
     #layer6 = ELU()(layer6)
-    layer7 = Flatten()(layer5)
-    layer8 = Dense(32)(layer7)
-    layer8 = ELU()(layer8)
-    layer9 = Dropout(drop_prob)(layer8)
-    layer10 = Dense(16)(layer9)
-    layer10 = ELU()(layer10)
-    layer11 = Dropout(drop_prob)(layer10)
-    layer12 = Dense(8)(layer11)
-    layer12 = ELU()(layer12)
+    layer7 = Convolution2D(nb_filter5,kernel_size_conv_5[0],kernel_size_conv_5[1],activation = "relu", border_mode = "valid", subsample = stride_5)(layer6)
+    layer8 = Flatten()(layer7)
+    #layer9 = Dropout(0.2)(layer8)
+    layer9 = Dense(100, activation = "relu")(layer8)
+    #layer9 = ELU()(layer9)    
+    layer10 = Dense(50, activation = "relu")(layer9)
+    #layer10 = ELU()(layer10)
+    #layer10 = Dropout(0.5)(layer10)
+    layer11 = Dense(10)(layer10)
+    #layer12 = ELU()(layer12)
     prediction = Dense(1)(layer11)
 
     #2.2.3 Initialize model
@@ -125,8 +137,9 @@ except:
     weights_imported = False
 
 #3 Compile model; if model.h5 available use these weigts to initialize, else random weigths
-optimizer = Adam(lr = 0.0001)
-model.compile(optimizer = optimizer, loss = "mse", metrics = ["accuracy"])
+#optimizer = Adam(lr = 0.0001)
+model.compile(optimizer = "adam", loss = "mse", metrics = ["accuracy"])
+model.summary()
 
 
 # Define function for loading single image
@@ -148,15 +161,16 @@ def load_image_and_steering_angle(data, camera_position, camera_steering_adjustm
     
     y = data["steering"][data_position] + steering_adj
 
-    if data["to_be_flipped"][data_position]:
-        X, y = flip_image(X,y)
-    
+    if data["to_be_flipped"][data_position] == 1:
+        X, y = flip_image(X,y)   
+
     return X,y
         
 
 # Define function for selecting relevant image regions
 def select_relevant_image_regions(img):
-    return np.concatenate((img[60:124,:120,:],img[60:124,200:,:]),axis = 1)
+    return img[54:120,:,:]
+    #return np.concatenate((img[60:124,:120,:],img[60:124,200:,:]),axis = 1)
 
 def resize_image(img, image_rescale_size):
     return misc.imresize(img,image_rescale_size)
