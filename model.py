@@ -56,7 +56,7 @@ print("Validation set size: {}".format(len(val)))
 #2.0.1 General hyperparameters
 epochs = 5
 batch_size = 64
-camera_steering_adjustment = 0.15
+camera_steering_adjustment = 0.1
 
 #2.0.2 General hyperparameters with direct influence on model architecture 
 # !!! If the model is loaded from existing model.h5 and model.json, 
@@ -68,7 +68,7 @@ else:
     nb_color_channel = 3
 image_rescale_size = (66,200,3)
 image_final_size = (66,200,nb_color_channel)
-flip_prob = 0.4
+flip_prob = 0.6
 
 #2.0.3 Model specific hyperparameters
 # !!! If the model is loaded from existing model.h5 and model.json, 
@@ -162,9 +162,7 @@ def load_image_and_steering_angle(data, camera_position, camera_steering_adjustm
     Input:
     data (pd.dataframe): Train or validation pandas dataframe
     camera_position (string): From where the image is taken in the simulator (Possible values: "left", "right", "center")
-    camera_steering adjustment (tuple): Tuple for steering adjustments (left_adjustment, center_adjustment, right_adjustment) 
-        (Typicall values: left_adjustment - positive as correction to the right/center required,
-        rightadjustment - negative as correction to the left/center required
+    camera_steering adjustment (float): Float for steering adjustments (should be positive) 
     data_position (int): Row number in pandas dataframes for train or validation data
 
     Output:
@@ -235,9 +233,7 @@ class BatchDataGenerator:
         batch_size (int): Number of samples in batch
         image_rescale_size (tuple): Size to which the image needs to be rescaled during image preprocessing as tuple of the form (n,n,3) (third dimension needs to be 3, no matter wheter 1 or all 3 color channels will be selected eventually)
         image_final_size (tuple): Final image size after all preprocessing steps (incl. color channel selection) as tuple of the form (n,n,n)
-        camera_steering adjustment (tuple): Tuple for steering adjustments (left_adjustment, center_adjustment, right_adjustment) 
-            (Typicall values: left_adjustment - positive as correction to the right/center required,
-            rightadjustment - negative as correction to the left/center required
+        camera_steering adjustment (float): Float for steering adjustments (should be positive)
         color_channel (string): Color channel to be selected from image. If 'None', all three color channels will be included in the batch. Else select 'r','g','b' for respective RGB-channel
         flip_prob (float): Probability with which image will be flipped around y axis and and steering angle will be reversed in order to address bias to left turns due to track design
         """
