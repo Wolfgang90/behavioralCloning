@@ -13,12 +13,17 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [image1]: ./documentation_img/network_architecture.jpg "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
+[image2]: ./documentation_img/udacity_data.png "Udacity data image example"
+[image3]: ./documentation_img/problem_area.png "Problem area data example"
+[image4]: ./documentation_img/throttle_initial.png "Initial throttle histogram"
+[image5]: ./documentation_img/throttle_afterwards.png "After preprocessing throttle histogram"
+[image6]: ./documentation_img/steering_initial.png "Initial steering angle historgram"
+[image7]: ./documentation_img/steering_afterwards.png "After preprocessing steering angle histogram"
+[image8]: ./documentation_img/camera_positions.png "Camera position examples"
+[image9]: ./documentation_img/cropping_before.png "Example image before cropping"
+[image10]: ./documentation_img/cropping_after.png "Example image after cropping"
+[image11]: ./documentation_img/resizing_after.png "Example image after resizing"
+[image12]: ./documentation_img/image_flip.png "Fipping image example"
 
 ## Rubric Points
 Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
@@ -105,44 +110,59 @@ The final model architecture (model.py lines 123 ff.) consisted of a convolution
 ####3. Creation of the Training Set & Training Process
 
 I initially started with the training data provided by Udacity.
+
 Example: 
-![alt text](documentation_img/udacity_data.png)
+
+![alt text][image2]
 
 However, I realized that I needed more training data in order to make suitable prediction with my model. I recorded several own rounds on the training track to capture further good driving behavior. For critical parts in the track (e.g. sections which display unique patterns for a very short section in the track) I created extra data by driving and duplicating the collected data in order to create a balanced datastructure representing all patterns of a track. Overall I thereby ended up with a dataset of 17841 datapoints
 
 Example for crutial area where I created extra data:
-![alt text](documentation_img/problem_area.png)
+
+![alt text][image3]
 
 In the data preprocessing pipline I removed training data with a throttle of less than 0.5 as the car eventually would drive around the track at full speed (model.py line 19 f.).
-Data before:
-![alt text](documentation_img/throttle_initial.png)
-Data afterwards:
-![alt text](documentation_img/throttle_afterwards.png)
 
-I also realized that there was very little data for strong steering angles.
-![alt text](documentation_img/steering_initial.png)
+Data before:
+
+![alt text][image4]
+
+Data afterwards:
+
+![alt text][image5]
+
+I also realized that there was very little data for strong steering angles:
+
+![alt text][image6]
 
 To address this problem, which might result to a model bias towards choosing low steering angles I duplicated the data for steering angles greater 0.1 by flipping the image and reversing the steering angle (model.py line 22 ff.). Afterwards the data distribution looked like this:
-![alt text](documentation_img/steering_afterwards.png)
+
+![alt text][image7]
 
 With the creation of extra data I was at a dataset of 18237 datapoints. After a shuffle to randomize the data (model.py line 38 f.), I splitted it into a training and a validation set by a split of 9:1 (model.py line 41 f.). The train set size was 16417, while the validation set size was 1825. The validation set helped determine if the model was over or under fitting.
 
 In order to also address the issue regarding the lack of data for strong steering angles and additionally the lack of recovery data, I decided to not only use the center camera images, but also the left and right. During batch generation they are randomly selected. If a left or right image is chosen, the steering angle is corrected by 0.1 for left and -0.1 for right images in order to achieve movement towards the middle of the track (model.py line 178 ff.). Example of the three image positions for 1 datapoint:
-![alt text](documentation_img/camera_positions.png)
+
+![alt text][image8]
 
 The horizion in the image does not provide information about the edges of the road. Same holds true for the foreground displaying the front of the car. Consequently, I decided to crop them in the preprocessing pipeline (model.py line 283 f.).
+
 Before:
-![alt text](documentation_img/cropping_before.png)
+
+![alt text][image9]
+
 After:
-![alt text](documentation_img/cropping_after.png)
+
+![alt text][image10]
 
 Subsequently, I resized the image to 66x200x3 in order to provide the right input structure for the Nvidia architecture (model.py line 286 f.):
-![alt text](documentation_img/resizing_after.png)
 
+![alt text][image11]
 
 As we also saw looking at the steering angle histograms above, the distribution is biased towards the left. Consequently the model will probably overfit towards left turns. To address this issue I implemented a random image flip with steering angle reversion in the batch generation with a probability of 0.6, to show the model a more balanced representation of left and right turns (model.py line 289 ff.).
-![alt text](documentation_img/image_flip.png)
 
-After all datapoints have been seen by the batch generator it automatically reshuffles the data (model.py line 268 ff.)
+![alt text][image12]
+
+After all datapoints have been seen by the batch generator it automatically reshuffles the data (model.py line 268 ff.).
 
 I used the training data for training the model. The validation set helped determine if the model was over or under fitting. Through empiric testing I determined that the ideal number of epochs for my model was 5 with a batch size of 64. To determine the loss I used the Minimum Squared Errors method. I employed an adam optimizer so that manually training the learning rate wasn't necessary.
