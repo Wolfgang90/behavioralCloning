@@ -12,7 +12,7 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/placeholder.png "Model Visualization"
+[image1]: ./documentation_img/network_architecture.jpg "Model Visualization"
 [image2]: ./examples/placeholder.png "Grayscaling"
 [image3]: ./examples/placeholder_small.png "Recovery Image"
 [image4]: ./examples/placeholder_small.png "Recovery Image"
@@ -100,7 +100,7 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 
 The final model architecture (model.py lines 123 ff.) consisted of a convolution neural network with the following layers and layer sizes:
 
-![alt text](documentation_img/network_architecture.jpg)
+![alt text][image1]
 
 ####3. Creation of the Training Set & Training Process
 
@@ -130,33 +130,19 @@ With the creation of extra data I was at a dataset of 18237 datapoints. After a 
 In order to also address the issue regarding the lack of data for strong steering angles and additionally the lack of recovery data, I decided to not only use the center camera images, but also the left and right. During batch generation they are randomly selected. If a left or right image is chosen, the steering angle is corrected by 0.1 for left and -0.1 for right images in order to achieve movement towards the middle of the track (model.py line 178 ff.). Example of the three image positions for 1 datapoint:
 ![alt text](documentation_img/camera_positions.png)
 
+The horizion in the image does not provide information about the edges of the road. Same holds true for the foreground displaying the front of the car. Consequently, I decided to crop them in the preprocessing pipeline (model.py line 283 f.).
+Before:
+![alt text](documentation_img/cropping_before.png)
+After:
+![alt text](documentation_img/cropping_after.png)
 
-As we also saw looking at the steering angle histograms above, the distribution is biased towards the left. Consequently the model will probably overfit towards left turns. To address this issue I implemented a random image flip with steering angle reversion in the batch generation with a probability of 0.6, to show the model a more balanced representation of left and right turns.
-Unflipped image
-
-
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
-
-![alt text][image2]
-
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
-
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
-
-Then I repeated this process on track two in order to get more data points.
-
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-![alt text][image6]
-![alt text][image7]
-
-Etc ....
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
+Subsequently, I resized the image to 66x200x3 in order to provide the right input structure for the Nvidia architecture (model.py line 286 f.):
+![alt text](documentation_img/resizing_after.png)
 
 
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
+As we also saw looking at the steering angle histograms above, the distribution is biased towards the left. Consequently the model will probably overfit towards left turns. To address this issue I implemented a random image flip with steering angle reversion in the batch generation with a probability of 0.6, to show the model a more balanced representation of left and right turns (model.py line 289 ff.).
+![alt text](documentation_img/image_flip.png)
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+After all datapoints have been seen by the batch generator it automatically reshuffles the data (model.py line 268 ff.)
+
+I used the training data for training the model. The validation set helped determine if the model was over or under fitting. Through empiric testing I determined that the ideal number of epochs for my model was 5 with a batch size of 64. To determine the loss I used the Minimum Squared Errors method. I employed an adam optimizer so that manually training the learning rate wasn't necessary.
