@@ -100,11 +100,21 @@ At the end of the process, the vehicle is able to drive autonomously around the 
 
 The final model architecture (model.py lines 123 ff.) consisted of a convolution neural network with the following layers and layer sizes:
 
-![alt text][documentation_img/network_architecture.jpg]
-
-
+![alt text](documentation_img/network_architecture.jpg)
 
 ####3. Creation of the Training Set & Training Process
+
+I initially started with the training data provided by Udacity.
+Example: 
+![alt text](documentation_img/udacity_data.png)
+
+However, I realized that I needed more data in order to make suitable prediction with my model. I recorded several rounds on the training track. For critical parts of the track I created extra data by driving and duplicating the collected data in order to create a balanced datastructure.
+
+Example for crutial area where I created extra data:
+![alt text](documentation_img/problem_area.png)
+
+
+
 
 To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
 
