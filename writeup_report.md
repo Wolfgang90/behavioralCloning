@@ -51,10 +51,7 @@ The model.py file contains the code for training and saving the convolution neur
 
 My model is based on Nvidias [best practice model](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf) which I enhanced by dropout. I experimented with various model structures but eventually the Nvidia structure fitted my problem best.
 
-My model consists of a convolution neural network with filters of varying strides (model.py line 85 ff.) and kernel sizes (model.py line 92 ff.) and depths between 24 and 64 (model.py line 78 ff.). The model includes RELU layers to introduce nonlinearity (model.py line 127 ff.).The data is normalized in the model using a Keras lambda layer (code line 126). 
-
-Here you see the detailed model structure:    
-![alt text][documentation_img/network_architecture.jpg]
+My model consists of a convolution neural network with filters of varying strides (model.py line 85 ff.) and kernel sizes (model.py line 92 ff.) and depths between 24 and 64 (model.py line 78 ff.). The model includes RELU layers to introduce nonlinearity (model.py line 127 ff.).The data is normalized in the model using a Keras lambda layer (code line 126). The detailed model structure is provided in one of the sections below.
    
 
 
@@ -72,11 +69,11 @@ Result: The model was tested by running it through the simulator and ensuring th
 
 ####3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 25).
+The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 150).
 
 ####4. Appropriate training data
 
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road ... 
+Training data was chosen to keep the vehicle driving on the road. I started with the basic Udacity training data and added additional training data myself by driving with the beta simulator providing smooth steering angles by mouse inputs. In the end I duplicated the data for parts of the track which seemed underrepresented to me. 
 
 For details about how I created the training data, see the next section. 
 
@@ -84,27 +81,27 @@ For details about how I created the training data, see the next section.
 
 ####1. Solution Design Approach
 
-The overall strategy for deriving a model architecture was to ...
+The overall strategy for deriving a model architecture was initially an experimental one. I started with one convolutional and one fully connected layer and increased the number of layers. However, this model was eventually not able to keep the car on the track for the full round.
+Consequently, I looked into existing best practices and created a model similar to the one of the [Nvidia paper](https://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf).
+I thought this model was an appropriate starting point as it has already proven its qualities in the real driving world and therefore could also be suitable to the simulator.
 
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
+In order to gauge how well my models was working, I split my image and steering angle data into a training and validation set already while experimenting with my own model structure. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting. 
 
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting. 
+In order to prevent overfitting I added a dropout layers. For my final architecture I just kept one of them after the first convolution as this yielded the best results. Furthermore I made the model choosing the image position (left, center, right) randomly during batch generation, while adding a corrector for the steering angle bias of left and right images.
 
-To combat the overfitting, I modified the model so that ...
+Both testing with my own model structure and with the one inspired by Nvidia, the car was driving around the track quite well in the simulator. However at some spots the car was struggeling. To overcome this challenge I duplicated the data for parts of the track which seemed underrepresented in the dataset to me in order to show these track pieces more often to the model.
+Furthermore, I realized, that most of the data had very small steering angles. In order to get a more balanced datastructure, I duplicated images with a resulting steering input of >0.1 by applying flipping and reversing of the steering input in order to prevent overfitting on data with small steering angles.
 
-Then I ... 
+In the end the car was just touching the curbs at the right turn of the track. In order to prevent this issue which I think was caused due to overfitting on the mostly left turns of the track.
 
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
-
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
+At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road or hitting the curbs at full speed.
 
 ####2. Final Model Architecture
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
+The final model architecture (model.py lines 123 ff.) consisted of a convolution neural network with the following layers and layer sizes:  
+![alt text][documentation_img/network_architecture.jpg]
 
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
 
-![alt text][image1]
 
 ####3. Creation of the Training Set & Training Process
 
