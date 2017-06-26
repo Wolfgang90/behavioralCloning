@@ -34,11 +34,11 @@ Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/4
 #### 1. Submission includes all required files and can be used to run the simulator in autonomous mode
 
 My project includes the following files:
-* model.py containing the script to create and train the model
-* drive.py for driving the car in autonomous mode
-* model.json containing the convolutional neural network model
-* model.h5 containing the trained weights of the convolution neural network 
-* writeup_report.md summarizing the results
+* `model.py` containing the script to create and train the model
+* `drive.py` for driving the car in autonomous mode
+* `model.json` containing the convolutional neural network model
+* `model.h5` containing the trained weights of the convolution neural network 
+* `writeup_report.md` summarizing the results
 
 #### 2. Submssion includes functional code
 Using the Udacity provided simulator and my `drive.py` file, the car can be driven autonomously around the track by executing 
@@ -74,13 +74,13 @@ The model was tested by running it through the simulator and ensuring that the v
 
 #### 3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 150).
+The model used an adam optimizer, so the learning rate was not tuned manually (`model.py` line 150).
 
 #### 4. Appropriate training data
 
 Training data was chosen to keep the vehicle driving on the road. I started with the basic Udacity training data and added additional training data myself by driving with the beta simulator providing smooth steering angles by mouse inputs. In the end I duplicated the data for parts of the track, which seemed underrepresented to me due to their specific nature. 
 
-For details about how I created the training data, see section "Model Architecture and Training Strategy" in point "3. Creation of the Training Set & Training Process". 
+For details about how I created the training data, see section "Model Architecture and Training Strategy" in point `3. Creation of the Training Set & Training Process`. 
 
 ### Model Architecture and Training Strategy
 
